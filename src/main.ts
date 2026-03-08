@@ -45,7 +45,7 @@ async function bootstrap() {
   // Validation Pipeline settings
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 
-  const PORT = app.get(ConfigService).get<number>('PORT') as number;
+  const PORT = Number(process.env.PORT) || app.get(ConfigService).get<number>('PORT') || 3000;
 
   // Swagger settings
   const config = new DocumentBuilder()
