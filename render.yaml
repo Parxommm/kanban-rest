@@ -1,0 +1,27 @@
+# Render.com Blueprint — Kanban REST API
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    runtime: node
+    name: kanban-api
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    preDeployCommand: npm run typeorm:migration
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kanban-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: USE_FASTIFY
+        value: "true"
+      - key: LOG_CONSOLE
+        value: "true"
+
+databases:
+  - name: kanban-db
+    plan: free
+    databaseName: kanban
+    postgresMajorVersion: "15"

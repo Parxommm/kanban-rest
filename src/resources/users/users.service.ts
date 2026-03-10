@@ -24,14 +24,16 @@ export class UsersService {
   }
 
   async create(userDto: IUser): Promise<IUserNoId> {
-    try {
-      const { name, login, password } = userDto;
-      const hash = await genHashPassword(password);
-      const modelUser = await this.usersRepository.create({ name, login, password: hash }).save();
-      return { id: modelUser.id, name: modelUser.name, login: modelUser.login };
-    } catch (e) {
+    const { name, login, password } = userDto;
+
+    const existing = await this.usersRepository.findOne({ where: { login } });
+    if (existing) {
       throw new HttpException('User login already exists!', HttpStatus.CONFLICT);
     }
+
+    const hash = await genHashPassword(password);
+    const modelUser = await this.usersRepository.create({ name, login, password: hash }).save();
+    return { id: modelUser.id, name: modelUser.name, login: modelUser.login };
   }
 
   async remove(id: UUIDType): Promise<void> {
