@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Repository } from 'typeorm';
+import { Repository, QueryFailedError } from 'typeorm';
 
 import { User, IUserNoId, IUser } from './users.entity';
 import { genHashPassword } from '../../helpers/genHashPassword';
@@ -32,8 +32,16 @@ export class UsersService {
     }
 
     const hash = await genHashPassword(password);
-    const modelUser = await this.usersRepository.create({ name, login, password: hash }).save();
-    return { id: modelUser.id, name: modelUser.name, login: modelUser.login };
+    try {
+      const modelUser = await this.usersRepository.create({ name, login, password: hash }).save();
+      return { id: modelUser.id, name: modelUser.name, login: modelUser.login };
+    } catch (e) {
+      // Дополнительная защита от гонок по уникальному индексу логина
+      if (e instanceof QueryFailedError && (e as any).code === '23505') {
+        throw new HttpException('User login already exists!', HttpStatus.CONFLICT);
+      }
+      throw e;
+    }
   }
 
   async remove(id: UUIDType): Promise<void> {

@@ -20,7 +20,8 @@ services:
       # - ./typings:/home/app/typings
     networks:
       - app-network
-    command: sh -c "npm run typeorm:migration && npm run start:dev"
+    # Локально поднимаем сервис без авто-запуска миграций, чтобы проще отлаживать подключение к БД
+    command: sh -c "npm run start:dev"
   db:
     image: postgres:alpine3.15
     container_name: db

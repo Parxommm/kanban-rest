@@ -6,18 +6,32 @@ dotenv.config({
   path: path.join(__dirname, '.env'),
 });
 
-const { POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT, POSTGRES_HOST } = process.env;
+const {
+  POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT, POSTGRES_HOST,
+} = process.env;
+
 const LOCAL_URL = `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`;
+const DATABASE_URL = process.env.DATABASE_URL as string | undefined;
+
+const isRender = Boolean(DATABASE_URL);
 
 export default {
   type: 'postgres',
   cache: false,
-  url: (process.env.DATABASE_URL as string) || LOCAL_URL,
+  url: DATABASE_URL || LOCAL_URL,
   synchronize: false,
   logging: false,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  // На Render включаем SSL (Postgres в облаке), локально — без SSL
+  ...(isRender
+    ? {
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    }
+    : {
+      ssl: false,
+      extra: { ssl: false },
+    }),
   entities: ['src/resources/**/**.entity{.ts,.js}'],
   migrations: ['./migrations/*.ts'],
 } as ConnectionOptions;
